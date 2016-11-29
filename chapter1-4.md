@@ -4,7 +4,7 @@
 ![構築する環境](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/picture2.png)
 
 　ここでは [Amazon CloudWatch](https://aws.amazon.com/jp/cloudwatch/) で検出された [Amazon EC2](https://aws.amazon.com/jp/ec2/) のリソース変更のイベントを検知し、`core.local` アクションを実行させます。  
-　core.local は Worker ノードにおいて任意のコマンドを実行するアクションになります。StackStorm では次のように、アクションを単体実行することもできます。
+　core.local は Worker ノードにおいて任意のコマンドを実行するアクションになります。StackStorm では次のように、アクションを単体実行することもできます。  
 
 ```
 vagrant@st2-node:~$ st2 run core.local cmd=date
@@ -22,7 +22,7 @@ result:
 vagrant@st2-node:~$ 
 ```
 
-  ワーカノードでアクション `core.local` を実行し、パラメータ `cmd` で受けたコマンド `date` を実行し、標準出力結果が上記の `result.stdout` から確認できます。また `status` から、当該アクションが正常終了したことが確認できます。
+  ワーカノードでアクション `core.local` を実行し、パラメータ `cmd` で受けたコマンド `date` を実行し、標準出力結果が上記の `result.stdout` から確認できます。また `status` から、当該アクションが正常終了したことが確認できます。  
 　以下では、これを冒頭の図が示すように 'aws.sqs_new_message' トリガが引かれた際に実行されるようにする方法を解説します。  
 
 ### 環境構築
@@ -106,20 +106,9 @@ criteria:
     type: 'equals'
 ```
 
-　2,3 行目の `name` と `description` は、それぞれルールのラベルと説明文を表します。上記のルールを登録したあとにルールの一覧を表示する `st2 rule list` コマンドを実行すると以下のように表示されます。  
-
-```
-vagrant@st2-node:~$ st2 rule list
-+----------------------------+---------+------------------------------------+---------+
-| ref                        | pack    | description                        | enabled |
-+----------------------------+---------+------------------------------------+---------+
-| default.ec2_event_handling | default | A rule to get events on Amazon EC2 | True    |
-+----------------------------+---------+------------------------------------+---------+
-vagrant@st2-node:~$ 
-```
-
-　- 行目の trigger と - 行目の action パラメータによって、トリガとアクションの紐付けを行っています。それぞれ - 行目の `trigger.type` と - 行目の `action.ref` パラメータでどのトリガが引かれたら、どのアクションを実行するかを指定しています。  
-　また - 行目の `action.parameters` で、トリガから渡されるパラメータとアクションのパラメータの変換設定を行っています。トリガとアクションがそれぞれがどういったパラメータを持っているかについては `st2 action get` と `st2 trigger get`コマンドで確認できます。以下は、それぞれのパラメータを確認した結果を表します。  
+　冒頭の `name` と `description` は、それぞれルールのラベルと説明文を表します。`enabled` パラメータは、当該ルールを有効化するかどうかを設定するためのもので、`False` を指定した場合には、ルールで指定したトリガが引かれてもアクションを実行しません。  
+　また `trigger` と `action` パラメータによって、トリガとアクションの紐付けを行っています。それぞれ `trigger.type` と `action.ref` パラメータでどのトリガが引かれたら、どのアクションを実行するかを指定しています。その際 `action.parameters` で、トリガから渡されるパラメータとアクションのパラメータの変換設定を行っています。トリガとアクションがそれぞれがどういったパラメータを持っているかについては `st2 action get` と `st2 trigger get`コマンドで確認できます。以下は、それぞれのパラメータを確認した結果を表します。  
+  最後の `criteria` では、アクションを実行する条件を記述することができます。StackStorm のルールエンジン (RuleEngine) は、ここで指定した条件に合致した場合のみ `action.ref` で指定したパラメータを実行します。ここでは、以下で示すトリガパラメータの `queue` の値が `notification_queue` だった場合のみ、アクションを実行する設定を記述しています。  
 
 ```
 vagrant@st2-node:~$ st2 trigger get aws.sqs_new_message
@@ -182,8 +171,6 @@ vagrant@st2-node:~$
 ```
 
 　トリガ `aws.sqs_new_message` の出力として `queue` と `body` のパラメータを持つオブジェクトが得られ、アクション `core.local` の入力として `cmd` と `sudo` パラメータがあることがわかります。またアクションの入力パラメータのうち `cmd` は `required` が `True` となっており、必須パラメータであることを表しています。先に示したルールでは [Jinja Template](http://jinja.pocoo.org/docs/dev/templates/) で記述することで、トリガの出力から `body` パラメータを取り出し、アクションの `cmd` パラメータに渡しています。  
-
-　最後に - 行目の `enabled` パラメータで、当該ルールを有効化するかどうかを設定できます。False を指定した場合には、ルールで指定したトリガが引かれてもアクションを実行しません。  
 
 ### 動作確認
  ここでいよいよルールを登録して EC2 にインスタンスを作成し、そのイベントを検知できるか確認します。  
