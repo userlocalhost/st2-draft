@@ -3,7 +3,7 @@
 
 　以下は、StackStorm がイベントを処理する一連の処理の流れを表した図になります。  
 
-![イベント処理の流れ](picture1.png)
+![イベント処理の流れ](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/picture1.png)
 
 　図に示すように StackStorm の IFTTTxWorkflow 処理の内部は Sensor, Trigger そして Action(Workflow) の３つの要素から構成されています。そして、これら３つの要素を機能毎にまとめたソフトウェアモジュールのことを `pack` と呼びます。StackStorm では動的に `pack` を追加・削除できる拡張性の高い機構になっています。  
 　ここでは pack の内部コンポーネントがどのような役割でどのように動作するかについて解説します。  

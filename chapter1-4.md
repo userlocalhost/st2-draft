@@ -1,14 +1,29 @@
 ## 動かしてみる
 　構築した StackStorm 環境に対して、以下のように AWS で発生したイベントを検知してアクション `core.local` を実行する環境を構築します（'core.local' がどんな処理を行うかについては以降で解説します）。  
 
-![構築する環境](picture2.png)
+![構築する環境](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/picture2.png)
 
 　ここでは [Amazon CloudWatch](https://aws.amazon.com/jp/cloudwatch/) で検出された [Amazon EC2](https://aws.amazon.com/jp/ec2/) のリソース変更のイベントを検知し、`core.local` アクションを実行させます。  
-　core.local は Worker ノードにおいて任意のコマンドを実行するアクションになります。StackStorm では次のように、アクションを単体実行することもできます。以下では `date` コマンドを実行する core.local アクションを実行しています。  
+　core.local は Worker ノードにおいて任意のコマンドを実行するアクションになります。StackStorm では次のように、アクションを単体実行することもできます。
 
-![core.local アクションの実行結果](exec_core.local.png)
+```
+vagrant@st2-node:~$ st2 run core.local cmd=date
+.
+id: 583d31566f086f6556b9669c
+status: succeeded
+parameters: 
+  cmd: date
+result: 
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: Tue Nov 29 07:42:14 UTC 2016
+  succeeded: true
+vagrant@st2-node:~$ 
+```
 
-　core.local アクションを実行し、処理が正常終了することが確認できました。これを、冒頭の図が示すように 'aws.sqs_new_message' トリガが引かれた際に実行されるようにする方法を解説します。  
+  ワーカノードでアクション `core.local` を実行し、パラメータ `cmd` で受けたコマンド `date` を実行し、標準出力結果が上記の `result.stdout` から確認できます。また `status` から、当該アクションが正常終了したことが確認できます。
+　以下では、これを冒頭の図が示すように 'aws.sqs_new_message' トリガが引かれた際に実行されるようにする方法を解説します。  
 
 ### 環境構築
 　ここでは以下の設定を行い、AWS のイベントが呼ばれた際に core.local アクションが実行されるようにします。  

@@ -17,12 +17,12 @@ $ sudo touch /opt/stackstorm/packs/hoge
 
 　これは、ファイル `hoge` を作成したイベントを全てのノードで検知し、それぞれのノードでトリガ `mypack.changed_file` が引かれ、ルール `mypack.mypack_test` に従ってアクションを実行した結果起こりました。以下はこの状況を表した図になります。  
 
-![StackStorm の裏側の出来事](p11)
+![StackStorm の裏側の出来事](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/ha-problem.png)
 
 　ここでの問題は、イベントの発生源が１つにも関わらずアクションが２回実行されたことです。例ではログにイベントの結果を吐き出すだけなので大したことはありませんが、イベントに対してアラートを発報したり、Public Cloud のインスタンスを起動するような仕組みの場合には深刻です。またノードが増える毎に深刻の度合いが増して行きます。  
 　この問題に対して StackStorm は [Partitioning Sensors](https://docs.stackstorm.com/reference/sensor_partitioning.html) という仕組みを提供しています。これは、ノード毎に稼働するセンサを管理する手法で、図で表すと先ほどの状況を以下のようにすることができます。  
 
-![Partitioning Sensors を用いた場合](p12)
+![Partitioning Sensors を用いた場合](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/partitioning-sensors.png)
 
 　このようにノード毎にセンサを分離させるとで、複数のノードがある環境下で発生したイベントに対して、センサ、トリガ、アクションを全て一意に対応させることが出来るようになります。  
 

@@ -22,7 +22,7 @@ $ st2sdk bootstrap mypack           ## pack の雛形を作成
 ### センサとトリガを作る
 　続いてセンサとトリガを作成します。コードを見る前にセンサに関するソフトウェアの構造について把握したいと思います。以下の図はセンサのソフトウェアアーキテクチャを表しています。  
 
-![センサのソフトウェアアーキテクチャ](p8)
+![センサのソフトウェアアーキテクチャ](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/sensor-implementation.png)
 
 　Sensor は外部システムのイベントを検知するユーザ定義の処理で、この後でその実装方法を示します。SensorService は Sensor がトリガやデータストア、設定ファイルなどにアクセスするための仕組みになります。Sensor は SensorService の `get_value` / `set_value` メソッド等を通じて MongoDB で管理されるデータストアのデータを扱うことや `dispatch` メソッドを通じて指定したトリガを引くことができます。  
 　また StackStorm は各センサごとにプロセスを立ち上げます。従って、ユーザ定義の処理がクラッシュした場合でも、他の StackStorm サービスに対して影響を及ぼすことはありません。  

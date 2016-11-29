@@ -13,7 +13,7 @@
 　  
 　例として、以下に示すような VM を作成してからプロビジョニングを行い、サービスインするまでのワークフローを記述します。  
 
-![ワークフロー (setup-vm) の例](image3.png)
+![ワークフロー (setup-vm) の例](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/workflow.png)
  
 　ActionChain は、具体的な処理のフローを定義する ActionChain 定義ファイルと、ActionChain に渡すパラメータなどを記述するメタデータファイルの二つから構成されます。  
 　以下は、上記のワークフローを実現する 定義ファイルとメタデータファイルになります。  
