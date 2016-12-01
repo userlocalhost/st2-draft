@@ -40,6 +40,21 @@ vagrant@st2-node:~$
 $ st2 run packs.install packs=aws
 ```
 
+　本稿執筆時点での StackStorm の最新バージョンは `2.0.1` ですが、次のバージョン `2.1` からは、pack を単一リポジトリで管理する運用をやめ、別々のリポジトリで管理し、それらを [StackStorm Exchange](https://exchange.stackstorm.org/) で統合管理する運用に変更されました。この変更は、pack の管理・運用上の都合によるところが大きいですが、利用者にとってもインストールする pack のバージョンやタグ指定ができるようになるメリットがあります。  
+　もし利用している StackStorm のバージョンが `2.1` 以降の場合には、以下のコマンドで最新版の pack をインストールします。  
+
+```
+$ st2 pack install aws
+```
+
+　なお、利用している StackStorm のバージョンは、以下のように `--version` オプションを指定することで確認できます。  
+
+```
+vagrant@st2-node:~$ st2 --version
+st2 2.0.1
+vagrant@st2-node:~$
+```
+
 #### aws pack の設定
 　インストールされた pack に関連するファイルは、通常 `/opt/stackstorm/packs` 配下に展開されます。今回インストールした aws pack の場合は `/opt/stackstorm/packs/aws` になります。  
 　また各 pack の設定ファイル 'config.yaml' が、pack のディレクトリのトップに配置されます。ここで aws の設定ファイルを次のように編集してください。  
