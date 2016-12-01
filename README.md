@@ -17,7 +17,7 @@
 * [おわりに](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter1-6.md)
 
 ---
-# 次回原稿
+# 次回原稿 (作成中)
 (記事の概要と対照読者の説明)
 
 * [StackStorm の機能拡張](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter2-1.md)

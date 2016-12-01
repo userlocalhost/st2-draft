@@ -65,10 +65,15 @@ sqs_other:
 ```
   
   冒頭の `aws_access_key_id`, `aws_secret_access_key` 及び `region` で認証情報とリージョンを設定しています。`aws_access_key_id` と `aws_secret_access_key` の取得方法については [AWS のドキュメント](http://docs.aws.amazon.com/ja_jp/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html) を参照してください。リージョンは東京リージョン 'ap-northeast-1' を指定します。  
-　最後に、イベントメッセージが通知される [Amazon SQS](https://aws.amazon.com/jp/sqs/) のキュー名 'notification_queue' を指定します。ここで指定したキューはこの後で [AWS マネジメントコンソール](https://aws.amazon.com/jp/console/) から作成します。  
+　またイベントメッセージが通知される [Amazon SQS](https://aws.amazon.com/jp/sqs/) のキュー名 'notification_queue' を指定します。ここで指定したキューはこの後で [AWS マネジメントコンソール](https://aws.amazon.com/jp/console/) から作成します。  
+　最後に、更新した設定を読み込ませるため、センサを再起動させます。  
+
+```
+$ sudo st2ctl restart-component st2sensorcontainer
+```
 
 #### AmazonSQS, CloudWatch の設定
-　AmazonSQS は Amazon が提供するフルマネージの MQ サービスで、CloudWatch はモニタリングサービスです。ここでは CloudWatch において、EC2 や S3 などのリソースが変更された際に、AmazonSQS に通知メッセージを送るように設定します。  
+　AmazonSQS は Amazon が提供するフルマネージの MQ サービスで、CloudWatch はモニタリングサービスです。ここでは CloudWatch において EC2 や S3 などのリソースが変更された際に、AmazonSQS に通知メッセージを送るように設定します。  
 　StackStorm は SQS に送られたメッセージを取得することで、間接的に AWS のイベントをハンドリングできます。StackStorm は SQS を利用する方法の他に、[Amazon SNS](https://aws.amazon.com/jp/sns/) を利用して通知を取得することもできます。後者の設定方法については、本稿では割愛します。  
 
 　では、それぞれの設定を実施します。  
@@ -83,7 +88,7 @@ sqs_other:
 　ここまでの設定で EC2 のイベントを aws pack のセンサ `AWSSQSSensor` で検知する準備が整いました。  
 　
 #### Rule の設定
-　最後に、センサ `AWSSQSSensor` がトリガ `aws.sqs_new_message` を引いた際に、アクション `core.local` を実行するルールを定義します。  
+　次に、センサ `AWSSQSSensor` がトリガ `aws.sqs_new_message` を引いた際に、アクション `core.local` を実行するルールを定義します。  
 　以下がルール定義の全文になります。ルール定義は YAML 形式で記述します。これをホームディレクトリに `ec2_event_handling.yaml` という名前でに保存します。  
 
 ```yaml
