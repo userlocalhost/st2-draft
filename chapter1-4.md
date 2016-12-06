@@ -34,25 +34,16 @@ vagrant@st2-node:~$
 * Rule の設定
 
 #### aws pack のインストール
-　StackStorm は [st2contrib](https://github.com/StackStorm/st2contrib) というリポジトリでサードパーティの pack を提供しています。以下コマンドで aws の pack をインストールします。  
-
-```
-$ st2 run packs.install packs=aws
-```
-
-　本稿執筆時点での StackStorm の最新バージョンは `2.0.1` ですが、次のバージョン `2.1` からは、pack を単一リポジトリで管理する運用をやめ、別々のリポジトリで管理し、それらを [StackStorm Exchange](https://exchange.stackstorm.org/) で統合管理する運用に変更されました。この変更は、pack の管理・運用上の都合によるところが大きいですが、利用者にとってもインストールする pack のバージョンやタグ指定ができるようになるメリットがあります。  
-　もし利用している StackStorm のバージョンが `2.1` 以降の場合には、以下のコマンドで最新版の pack をインストールします。  
+　サードパーティの様々な pack が [StackStorm Exchange](https://exchange.stackstorm.org/) に登録されており、ここに登録されている pack を以下のコマンドでインストールできます。ここでは aws の最新の pack をインストールします。  
 
 ```
 $ st2 pack install aws
 ```
 
-　なお、利用している StackStorm のバージョンは、以下のように `--version` オプションを指定することで確認できます。  
+　インストールされた pack は以下のコマンドで確認できます。  
 
 ```
-vagrant@st2-node:~$ st2 --version
-st2 2.0.1
-vagrant@st2-node:~$
+$ st2 pack list
 ```
 
 #### aws pack の設定
