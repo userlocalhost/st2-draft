@@ -18,8 +18,14 @@
 
 ---
 # 次回原稿 (作成中)
-(記事の概要と対照読者の説明)
+## タイトル：StackStorm で始める運用自動化 ~応用編~
+　このエントリでは、イベントドリブンなワークフロー自動化ツール StackStorm について、２回に分けてたっぷりと解説してゆきます。  
+　前回は、StackStorm を初めて知人、まだ使ったことが無い人向けに StackStorm がどんなもので、どのように使うかといったユーザ視点で解説してきました。  
+
+　今回は、運用自動化を行う開発者、及び運用自動化を行うシステムの運用者に向けて、StackStorm に独自の拡張機能を追加する方法、及び StackStorm の運用のポイントについて解説します。運用については特に、高可用な環境構築の方法について詳しく解説します。  
+　本エントリの内容を最後まで読んでいただくことで、StackStorm を用いた開発・運用に関する一通りの知識を習得できるようになると思います。  
 
 * [StackStorm の機能拡張](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter2-1.md)
 * [High Available な環境構築](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter2-2.md)
 * [冗長構成な StackStorm の運用の注意点](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter2-3.md)
+* [終わりに](https://github.com/userlocalhost2000/st2-draft/blob/master/chapter2-4.md)
