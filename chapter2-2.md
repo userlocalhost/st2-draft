@@ -1,49 +1,26 @@
 ## High Available な環境構築
 　これまで StackStorm の使い方や機能拡張の方法など、開発寄りな内容について解説してきましたが、ここからは StackStorm の運用のポイントについて解説します。  
-　本稿の冒頭で StackStorm が Scalable で High Available なアーキテクチャであることを説明しました。ここでは、冗長構成な StackStorm における運用の注意点について解説します。  
+　本稿の冒頭で StackStorm が Scalable で High Available なアーキテクチャであることを説明しました。ここでは、冗長構成な StackStorm における運用に焦点を移して解説します。  
 
 ### 冗長構成な StackStorm の構築
-
-　ここで冗長構成な StackStorm を構築します。  
+　まずは冗長構成な StackStorm を構築します。  
 　[StackStorm のドキュメント](https://docs.stackstorm.com/reference/ha.html#reference-ha-setup) に、以下の構成での構築方法が解説されていますが、ここでは簡単のために別の方法を紹介します。  
 
 ![StackStorm HA reference deployment](https://docs.stackstorm.com/_images/st2-deployment-multi-node.png)
 (出典：[High availability deployment | StackStorm 2.0.1 documentation](https://docs.stackstorm.com/reference/ha.html))
 
-　ここでは、最初に構築したノードをプライマリノードとし、これから構築するノードをセカンダリノードとする環境を構築します。図にすると以下のようになります。なお以降では Mistral を利用しないため PostgreSQL についての設定は省略します。  
+　ここでは、最初に構築したノード (プライマリノード) に加えて、もう一台のノード (セカンダリノード) を追加することで、冗長な StackStorm 環境を構築します。最終的に、以下のような環境を構築します (なお以降では Mistral を利用しないため PostgreSQL についての設定は省略します) 。 
 
 ![StackStorm 冗長構成](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/ha-architecture.png)
 
 　上記の構成で StackStorm の各サービスは冗長化しますが「プライマリノードが単一障害点になるじゃないか！」と思う鋭い読者もいるかもしれません。  
-　確かに現状はその通りですが、[MongoDB のレプリケーション](https://docs.mongodb.com/manual/replication/) や [RabbitMQ のクラスタ設定](https://www.rabbitmq.com/clustering.html) を利用することで、完全に単一障害点を無くす構成の StackStorm 環境を構築することもできます (本章の最後で DMM.com ラボにおける構成を紹介します)。これらの解説については本稿の趣旨を超えるためここでは割愛します。ただし RabbitMQ については、StackStorm のクラスタ指定の説明の都合上、簡単に解説します。 
+　確かに現状はその通りですが、[MongoDB のレプリケーション](https://docs.mongodb.com/manual/replication/) や [RabbitMQ のクラスタ設定](https://www.rabbitmq.com/clustering.html) を利用することで、完全に単一障害点を無くす構成の StackStorm 環境を構築することもできます (本章の最後で単一障害点を無くした DMM.com ラボにおける構成を紹介します)。ただ、これらの内容については本稿の趣旨を超えるためここでは割愛します。ただし RabbitMQ のクラスタ設定については、StackStorm における RabbitMQ のクラスタ指定の説明の都合上、簡単に解説します。 
 
 ### プライマリノードの設定変更
-　冗長構成を構築するに際し、プライマリノードにおいて、セカンダリノードからの MongoDB 及び RabbitMQ へのアクセスを許可するための設定と NFS の設定を行います。  
-
-#### RabbitMQ の設定
-　RabbitMQ のクラスタ環境を構築するために、ノード間で共通の [Erlang Cookie] を設定します。Erlang Cookie は RabbitMQ の実装言語 Erlang の言語機能で、複数ノード間での相互接続を許可するためのセキュリティ機構です。Cookie を指定した場合、同一の設定値を持つノード同士でのみ接続することができます。  
-　ここでは、以下の通り RabbitMQ の Erlang Cookie を再設定し、RabbitMQ を再起動させます。  
-
-```
-vagrant@st2-node:~$ sudo service rabbitmq-server stop
-vagrant@st2-node:~$ sudo bash -c 'echo stackstorm-mq-cluster > /var/lib/rabbitmq/.erlang.cookie'
-vagrant@st2-node:~$ sudo service rabbitmq-server start
-```
-
-　また、お互いのノードでホスト名の名前解決ができるよう `/etc/hosts` に以下の２行を追加します。  
-
-```
-vagrant@st2-node:~$ sudo bash -c 'cat <<EOS >> /etc/hosts
-192.168.0.100     st2-node
-192.168.0.101     st2-secondary
-EOS
-'
-```
-
-　クラスタ設定の方法については、セカンダリノードを構築する際に解説します。  
+　冗長構成の環境を構築する上で、プライマリノードに対して、セカンダリノードから MongoDB へアクセスを許可する設定、及び RabbitMQ のクラスタ設定、更に NFS の設定を行います。それぞれの設定方法について順に解説します。  
 
 #### MongoDB の設定
-　続いて MongoDB にセカンダリノードからアクセスできるよう設定ファイル (/etc/mongodb.conf) ファイルを以下の通り修正し、サービスを再起動させます。  
+　まず MongoDB にセカンダリノードからアクセスできるよう設定ファイル (/etc/mongodb.conf) ファイルを以下の通り修正し、サービスを再起動させます。  
 
 ```diff
 --- etc/mongod.conf.orig	2016-11-28 07:18:22.490265432 +0000
@@ -62,6 +39,28 @@ EOS
 vagrant@st2-node:~$ sudo service mongod restart
 ```
 
+#### RabbitMQ の設定
+　続いて RabbitMQ のクラスタ環境を構築するために、ノード間で共通の [Erlang Cookie] を設定します。Erlang Cookie は RabbitMQ の実装言語 Erlang の言語機能で、複数ノード間での相互接続を許可するためのセキュリティ機構です。Cookie を指定した場合、Erlang インタプリタは同一の設定値を持つノード同士でのみ接続することができます。  
+　ここでは、以下の通り RabbitMQ の Erlang Cookie を再設定し、RabbitMQ を再起動させます。  
+
+```
+vagrant@st2-node:~$ sudo service rabbitmq-server stop
+vagrant@st2-node:~$ sudo bash -c 'echo stackstorm-mq-cluster > /var/lib/rabbitmq/.erlang.cookie'
+vagrant@st2-node:~$ sudo service rabbitmq-server start
+```
+
+　また、お互いのノードでホスト名の名前解決ができるよう `/etc/hosts` に以下の２行を追加します。２行目はこのあと構築するセカンダリノードの設定値になります。  
+
+```
+vagrant@st2-node:~$ sudo bash -c 'cat <<EOS >> /etc/hosts
+192.168.0.100     st2-node
+192.168.0.101     st2-secondary
+EOS
+'
+```
+
+　クラスタ設定の方法については、セカンダリノードを構築する際に解説します。  
+
 #### NFS の設定
 　StackStorm で冗長構成を組む場合、StackStorm が参照するコンテンツディレクトリ (`/opt/stackstorm/` ディレクトリ配下の `packs` と `virtualenvs` の２つ) をノード間で共有させる必要があります。ここではプライマリノードに NFS サーバを構築し、セカンダリノードからコンテンツディレクトリがマウントできるようにします。  
 
@@ -71,6 +70,7 @@ vagrant@st2-node:~$ sudo apt-get install nfs-kernel-server
 ```
 
 　続いて、設定ファイル `/etc/exports` にセカンダリノードに対して公開するディレクトリを指定します。以下に、追加した設定を示します。  
+
 ```diff
 --- etc/exports.orig	2016-11-28 07:44:03.014216487 +0000
 +++ /etc/exports	2016-11-28 07:48:33.258207901 +0000
@@ -81,7 +81,8 @@ vagrant@st2-node:~$ sudo apt-get install nfs-kernel-server
 +/opt/stackstorm/packs         192.168.0.101(rw,sync,no_subtree_check,anonuid=0,anongid=999)
 +/opt/stackstorm/virtualenvs   192.168.0.101(rw,sync,no_subtree_check,anonuid=0,anongid=999)
 ```
-　オールインワンインストールをした場合、コンテンツディレクトリの所有者（ユーザ・グループ）は root/st2packs に設定されます。マウント先でも同様に扱えるようにするため `anonuid` と `anongid` オプションに、それぞれ root の uid と st2packs の gid を設定します。尚 st2packs の gid は以下の方法で確認できます。  
+
+　StackStorm をオールインワンインストールをした場合、コンテンツディレクトリの所有者（ユーザ・グループ）は root/st2packs に設定されます。マウント先でも同様に扱えるようにするため `anonuid` と `anongid` オプションに、それぞれ root の uid と st2packs の gid を設定します。なお st2packs の gid は以下の方法で確認できます。  
 
 ```sh
 vagrant@st2-node:~$ grep 'st2packs' /etc/group
@@ -97,7 +98,7 @@ vagrant@st2-node:~$ sudo service nfs-kernel-server restart
 
 ### セカンダリノードの構築
 　続いて、セカンダリノードの構築を行います。  
-　基本編の [StackStorm のインストール](https://github.com/userlocalhost/st2-draft/blob/master/chapter1-3.md) で解説した方法で Vagrant からセカンダリノードを作成し、StackStorm をインストールします。その際 Vagrantfile に設定するプライベートネットワークの IP アドレスを、プライマリノードに設定したものと違う値を設定してください。ここでは以下の通り Vagrantfile を修正して、セカンダリノードをインストールします。  
+　基本編の [StackStorm のインストール](https://github.com/userlocalhost/st2-draft/blob/master/chapter1-3.md) で解説した方法で Vagrant からセカンダリノードを作成し、StackStorm をインストールします。その際 Vagrantfile に設定するプライベートネットワークの IP アドレスを、プライマリノードに設定したものと違う値を設定してください。ここでは以下の通り Vagrantfile を修正して、セカンダリノードを作成します。  
 
 ```diff
 $ diff Vagrantfile.orig Vagrantfile
@@ -127,7 +128,7 @@ $ vagrant up
 $ vagrant ssh
 ```
 
-　セカンダリノードが立ち上がったら、構築したノードで StackStorm をインストールします。  
+　セカンダリノードが立ち上がったら、作成したノードで StackStorm をインストールします。  
 
 ```
 vagrant@st2-secondary:~$ curl -sSL https://stackstorm.com/packages/install.sh | bash -s -- --user=st2admin --password=password
@@ -150,7 +151,7 @@ vagrant@st2-secondary:~$ sudo bash -c 'echo stackstorm-mq-cluster > /var/lib/rab
 vagrant@st2-secondary:~$ sudo service rabbitmq-server start
 ```
 
-　２つのノードで同じ Cookie の値を持つ RabbitMQ ノードを起動させたところで、クラスタ設定を行います。クラスタ設定を行うことで、クラスタのノード間で、メッセージキューを除く全ての管理・設定情報が共有されるようになります。クラスタ設定はどちらか一方のノードでのみ行えば良いです。ここではセカンダリノードで以下の通り、クラスタ設定作業を実施します。  
+　２つのノードで同じ Cookie の値を持つ RabbitMQ ノードを起動させたところで、クラスタ設定を行います。クラスタ設定を行うことで、クラスタのノード間で、メッセージキューを除く全ての管理・設定情報が共有されるようになります。クラスタ設定はどちらか一方のノードでのみ行えば良いです。ここではセカンダリノードで以下のコマンドを実行し、プライマリノードとクラスタを組みます。  
 
 ```
 vagrant@st2-secondary:~$ sudo rabbitmqctl stop_app
@@ -159,7 +160,7 @@ vagrant@st2-secondary:~$ sudo rabbitmqctl start_app
 ```
 
 　続いて RabbitMQ に外部からのアクセス用のユーザを追加します。これまでは、デフォルトで作成される `guest` アカウントでログインしていましたが、[`guest` アカウントはローカルホストからしかアクセス出来ない](https://www.rabbitmq.com/access-control.html) ため、ここで別アカウント `st2` を作成し、アクセス権限の付与を行います。  
-　クラスタ設定を行っているので、どちらか一方のノードで作成・設定作業をすれば、もう一方のノードにも同じ設定が反映されます。  
+　既にクラスタ設定を行っているので、どちらか一方のノードで作成・設定作業をすれば、もう一方のノードにも同じ設定が反映されます。  
 
 ```
 vagrant@st2-secondary:~$ sudo rabbitmqctl add_user st2 passwd
@@ -167,7 +168,7 @@ vagrant@st2-secondary:~$ sudo rabbitmqctl set_permissions st2 ".*" ".*" ".*"
 ```
 
 #### NFS の設定
-　続いて NFS でサーバのプライマリノードのコンテンツディレクトリをマウントし、実行環境及び静的データをプライマリノードと共有します。`/etc/fstab` を以下の通り修正し、それぞれのマウントポイントで指定したディレクトリをマウントをします。  
+　続いてプライマリノードのコンテンツディレクトリを NFS でマウントし、実行環境及び静的データをプライマリノードと共有します。`/etc/fstab` を以下の通り修正し、それぞれのマウントポイントで指定したディレクトリをマウントをします。  
 
 ```diff
 --- etc/fstab.orig	2016-11-28 09:55:20.319586592 +0000
@@ -226,13 +227,13 @@ vagrant@st2-secondary:~$ st2 pack list | grep github
 vagrant@st2-secondary:~$
 ```
 
-　上記のように、セカンダリノードで github の Pack の情報が得られれば成功です。またセカンダリノードを停止させても、Pack のインストールから、Sensor のイベント監視、Action の実行を継続的に行うことができます。  
+　上記のように、セカンダリノードで github pack の情報が得られれば成功です。またセカンダリノードを停止させても、Pack のインストールから、センサのイベント監視、アクションの実行を継続的に行うことができます。  
 　
 ### DMM.com ラボにおける StackStorm 環境
 　参考として、DMM.com ラボにおける StackStorm 環境を以下で紹介します。  
 
 ![DMM.com ラボの StackStorm 環境](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/dmm-architecture.png)
 
-　DMM.com ラボの環境では、プライマリノードから更に RabbitMQ、MongoDB を外に出し、PostgreSQL を MySQL に変えた構成を採っています。また RabbitMQ は、上述のクラスタ設定に加えて、メッセージキューのデータもノード間で複製する [HA Queue](https://www.rabbitmq.com/ha.html) の設定を行うことで、より可用性の高い環境を構築しています。  
+　DMM.com ラボの環境では、プライマリノードから更に RabbitMQ、MongoDB を外に出し、PostgreSQL を MySQL に変えた構成を採っています。また RabbitMQ は、上述のクラスタ設定に加えて、メッセージキューのデータもノード間で複製する [HA Queue](https://www.rabbitmq.com/ha.html) の設定を行っています。これによって、当該環境の可用性をより高めることができます。  
 　更に、コンテンツディレクトリも可用性の高い共有ストレージに置くことで、StackStorm ノードから状態を持つ要素を完全に無くすことができるようになります。  
-　このように StackStorm ノードをステートレス (stateless) にすることで、StackStorm ノードをスケールさせることができるようになります。  
+　このように StackStorm ノードをステートレス (stateless) にすることで、StackStorm ノードをスケールさせることができるようになり、負荷の増加に対しても柔軟に対応できるようになります。  
