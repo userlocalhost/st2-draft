@@ -17,13 +17,13 @@ $ sudo touch /opt/stackstorm/packs/hoge
 
 　これは、ファイル `hoge` を作成したイベントを全てのノードで検知し、それぞれのノードでトリガ `mypack.changed_file` が引かれ、ルール `mypack.mypack_test` に従ってアクションを実行した為に、このようになりました。以下はこの状況を表した図になります。  
 
-![StackStorm の裏側の出来事](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/ha-problem.png)
+![StackStorm の裏側の出来事](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/ha-problem.png)
 
 　ここでの問題は、イベントの発生源が１つにも関わらずアクションが２回実行されたことです。  
 　例ではログにイベントの結果を出力するだけなので大した影響はありませんが、イベントに対してアラートを発報したり、Public Cloud のインスタンスを起動するような仕組みの場合には深刻です。またノードが増える毎にその度合いは増して行きます。  
 　StackStorm はこの問題を回避する手段として [Partitioning Sensors](https://docs.stackstorm.com/reference/sensor_partitioning.html) という仕組みを提供しています。各ノードで Partitioning Sensors を設定することで、ノード毎に稼働するセンサを管理・選択できるようになります。これによって、先ほどの状況を以下のようにすることができます。  
 
-![Partitioning Sensors を用いた場合](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/partitioning-sensors.png)
+![Partitioning Sensors を用いた場合](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/partitioning-sensors.png)
 
 　このようにノード毎にセンサを分離させるとで、複数の StackStorm ノードがある環境下で発生したイベントに対して、センサ、トリガ、アクションを一意に紐付けることが出来るようになります。  
 
@@ -105,7 +105,7 @@ $ sudo rm /opt/stackstorm/packs/hoge
 
 　その理由は、ワーカプロセス (st2actionrunner) が全てのノードで動作しているためです。StackStorm では以下の図のように、センサプロセスとワーカプロセスが別々に動作しており、それらが MQ を介して接続されています。  
 
-![イベント検知からアクション実行までの各プロセスの処理の流れ](https://raw.githubusercontent.com/userlocalhost2000/st2-draft/master/img/processing-flow.png)
+![イベント検知からアクション実行までの各プロセスの処理の流れ](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/processing-flow.png)
 
 　[StackStorm の機能拡張](https://github.com/userlocalhost/st2-draft/blob/master/chapter2-1.md) で解説した通り、センサは `SensorService` の `dispatch` メソッドを実行してトリガを引きます。こうして送られた通知は `st2rulesengine` というプロセスに送られ、トリガに紐付けられたルールが無いかを確認します。そして当該トリガに紐付くルールを見つけると、アクションの実行命令 (ActionExecution) をワーカプロセス `st2actionrunner` に MQ を介して送ります。アクション実行命令を受け取ったワーカは、[runner_type](https://docs.stackstorm.com/actions.html#available-runners) に従った形式でアクションを実行します。  
 
