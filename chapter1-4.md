@@ -6,21 +6,7 @@
 　ここでは [Amazon CloudWatch](https://aws.amazon.com/jp/cloudwatch/) で検出された [Amazon EC2](https://aws.amazon.com/jp/ec2/) のリソース変更のイベントを検知し、`core.local` アクションを実行させます。  
 　core.local は Worker ノードにおいて任意のコマンドを実行するアクションになります。StackStorm では次のように、アクションを単体実行することもできます。  
 
-```
-vagrant@st2-node:~$ st2 run core.local cmd=date
-.
-id: 583d31566f086f6556b9669c
-status: succeeded
-parameters: 
-  cmd: date
-result: 
-  failed: false
-  return_code: 0
-  stderr: ''
-  stdout: Tue Nov 29 07:42:14 UTC 2016
-  succeeded: true
-vagrant@st2-node:~$ 
-```
+![アクション 'core.local' の実行結果](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/execute_core.local.png)
 
 　パラメータ `cmd` で受けたコマンド `date` を、ローカルノード `st2-node` で実行しています。実行結果の `result.stdout` パラメータから、当該アクションで得られた標準出力の結果を確認できます。また `status` から、当該アクションが正常終了 (succeeded) したことが確認できます。  
 　以下では、このアクションを冒頭の図で示したように 'aws.sqs_new_message' トリガが引かれた際に実行する方法を解説します。  
@@ -124,65 +110,9 @@ criteria:
 　アクションの指定に関してもう少し詳しく解説します。`action.parameters` では、トリガからの出力パラメータとアクションへの入力パラメータの変換設定を行っています。ここでは、トリガの出力 `body` パラメータを `echo` コマンドの引数に指定しています。  
 　トリガとアクションがそれぞれがどういったパラメータを持っているかについては `st2 action get` と `st2 trigger get`コマンドで確認できます。以下は、それぞれのパラメータを確認した結果です。  
 
-```
-vagrant@st2-node:~$ st2 trigger get aws.sqs_new_message
-+-------------------+--------------------------------------------------------+
-| Property          | Value                                                  |
-+-------------------+--------------------------------------------------------+
-| id                | 582ff9c388fa3f318505cb08                               |
-| ref               | aws.sqs_new_message                                    |
-| pack              | aws                                                    |
-| name              | sqs_new_message                                        |
-| description       | Trigger which indicates that a new message has arrived |
-| parameters_schema |                                                        |
-| payload_schema    | {                                                      |
-|                   |     "type": "object",                                  |
-|                   |     "properties": {                                    |
-|                   |         "queue": {                                     |
-|                   |             "type": "string"                           |
-|                   |         },                                             |
-|                   |         "body": {                                      |
-|                   |             "type": "object"                           |
-|                   |         }                                              |
-|                   |     }                                                  |
-|                   | }                                                      |
-| tags              |                                                        |
-| uid               | trigger_type:aws:sqs_new_message                       |
-+-------------------+--------------------------------------------------------+
-vagrant@st2-node:~$
-```
+![トリガ 'aws.sqs_new_message' の詳細情報](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/get_aws.sqs_new_message.png)
 
-```
-vagrant@st2-node:~$ st2 action get core.local
-+-------------+--------------------------------------------------------------+
-| Property    | Value                                                        |
-+-------------+--------------------------------------------------------------+
-| id          | 582513ef88fa3f5072eee96c                                     |
-| uid         | action:core:local                                            |
-| ref         | core.local                                                   |
-| pack        | core                                                         |
-| name        | local                                                        |
-| description | Action that executes an arbitrary Linux command on the       |
-|             | localhost.                                                   |
-| enabled     | True                                                         |
-| entry_point |                                                              |
-| runner_type | local-shell-cmd                                              |
-| parameters  | {                                                            |
-|             |     "cmd": {                                                 |
-|             |         "required": true,                                    |
-|             |         "type": "string",                                    |
-|             |         "description": "Arbitrary Linux command to be        |
-|             | executed on the remote host(s)."                             |
-|             |     },                                                       |
-|             |     "sudo": {                                                |
-|             |         "immutable": true                                    |
-|             |     }                                                        |
-|             | }                                                            |
-| notify      |                                                              |
-| tags        |                                                              |
-+-------------+--------------------------------------------------------------+
-vagrant@st2-node:~$ 
-```
+![アクション 'core.local' の詳細情報](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/get_core.local.png)
 
 　トリガ `aws.sqs_new_message` の出力として `queue` と `body` のパラメータがあり、そしてアクション `core.local` の入力として `cmd` と `sudo` パラメータがあることがわかります。またアクションの入力パラメータのうち `cmd` は `required: true` となっており、必須パラメータであることを表しています。  
 
@@ -190,45 +120,7 @@ vagrant@st2-node:~$
  ここでいよいよルールを登録して EC2 にインスタンスを作成し、そのイベントを検知できるか確認します。  
  まずは以下のコマンドで、先ほど作成したルールを登録します。  
 
-```
-vagrant@st2-node:~$ ls -l ec2_event_handling.yaml
--rw-rw-r-- 1 vagrant vagrant 307 Nov 22 05:43 ec2_event_handling.yaml
-vagrant@st2-node:~$ st2 rule create ./ec2_event_handling.yaml
-+-------------+----------------------------------------------------------+
-| Property    | Value                                                    |
-+-------------+----------------------------------------------------------+
-| id          | 5833dba788fa3f6570b3a27b                                 |
-| name        | ec2_event_handling                                       |
-| pack        | default                                                  |
-| description | A rule to get events on Amazon EC2                       |
-| action      | {                                                        |
-|             |     "ref": "core.local",                                 |
-|             |     "parameters": {                                      |
-|             |         "cmd": "echo "{{trigger.body}}" >> /tmp/results" |
-|             |     }                                                    |
-|             | }                                                        |
-| criteria    | {                                                        |
-|             |     "trigger.queue": {                                   |
-|             |         "pattern": "notification_queue",                 |
-|             |         "type": "equals"                                 |
-|             |     }                                                    |
-|             | }                                                        |
-| enabled     | True                                                     |
-| ref         | default.ec2_event_handling                               |
-| tags        |                                                          |
-| trigger     | {                                                        |
-|             |     "type": "aws.sqs_new_message",                       |
-|             |     "ref": "aws.sqs_new_message",                        |
-|             |     "parameters": {}                                     |
-|             | }                                                        |
-| type        | {                                                        |
-|             |     "ref": "standard",                                   |
-|             |     "parameters": {}                                     |
-|             | }                                                        |
-| uid         | rule:default:ec2_event_handling                          |
-+-------------+----------------------------------------------------------+
-vagrant@st2-node:~$ 
-```
+![ルール 'ec2_event_handling' を登録](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/create_rule.png)
 
 　続いて [EC2 のコンソール](https://ap-northeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-northeast-1#Instances:sort=instanceId) から、インスタンス 'test-instance' を作成します。  
 
@@ -236,14 +128,7 @@ vagrant@st2-node:~$
 
 　程なくして、ルールで記述した `echo` コマンドのリダイレクト先のファイル `/tmp/results` に CloudWatch の出力が表示されることが確認できます。  
 
-```
-vagrant@st2-node:~$ ls -lt /tmp/results 
--rw-r--r-- 1 stanley stanley 610 Nov 22 06:37 /tmp/results
-vagrant@st2-node:~$ cat /tmp/results 
-{version:0,id:ac2c2f0f-e969-4cc4-8578-d64af974cce6,detail-type:EC2 Instance State-change Notification,source:aws.ec2,account:353232136563,time:2016-11-22T06:36:47Z,region:ap-northeast-1,resources:[arn:aws:ec2:ap-northeast-1:353232136563:instance/i-6a8547f4],detail:{instance-id:i-6a8547f4,state:pending}}
-{version:0,id:d7a5ad4e-18e7-4fef-9119-4df9e905faef,detail-type:EC2 Instance State-change Notification,source:aws.ec2,account:353232136563,time:2016-11-22T06:36:57Z,region:ap-northeast-1,resources:[arn:aws:ec2:ap-northeast-1:353232136563:instance/i-6a8547f4],detail:{instance-id:i-6a8547f4,state:running}}
-vagrant@st2-node:~$ 
-```
+![EC2 イベントの通知結果](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/event_output.png)
 
 　ここまで EC2 のイベントを StackStorm で受け取り、ユーザ定義のルールに沿って処理する方法について解説してきました。ここまでの内容を応用することで、様々なアプリケーションサービスと連携する処理を簡単に設定することができます。  
 

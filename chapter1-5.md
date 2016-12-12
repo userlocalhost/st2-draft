@@ -115,28 +115,7 @@ $ st2 run default.setup_vm name=hoge ipaddr=192.168.1.10 domain=st2.dmm.local
 
 　引数で指定した `name`, `ipaddr`, `domain` は、メタデータファイルで記述したワークフローに渡すパラメータになります。ここで指定しなかったパラメータは、メタデータファイルの定義に沿ってデフォルトの値が内部で設定されます。これらの値はワークフロー内部のアクションで参照されます。以下は上記コマンドの実行結果になります。  
 
-```
-vagrant@st2-node:~$ st2 run default.setup_vm name=hoge ipaddr=192.168.1.10 domain=st2.dmm.local
-...
-id: 583d543f6f086f6556b966b1
-action.ref: default.setup_vm
-parameters: 
-  domain: st2.dmm.local
-  ipaddr: 192.168.1.10
-  name: hoge
-status: succeeded
-start_timestamp: 2016-11-29T10:11:11.067307Z
-end_timestamp: 2016-11-29T10:11:15.963965Z
-+--------------------------+------------------------+--------------+------------+-------------------------------+
-| id                       | status                 | task         | action     | start_timestamp               |
-+--------------------------+------------------------+--------------+------------+-------------------------------+
-| 583d543f6f086f6462f9410a | succeeded (0s elapsed) | create-vm    | core.local | Tue, 29 Nov 2016 10:11:11 UTC |
-| 583d54406f086f6462f9410c | succeeded (0s elapsed) | provision-vm | core.local | Tue, 29 Nov 2016 10:11:12 UTC |
-| 583d54416f086f6462f9410e | succeeded (1s elapsed) | register-dns | core.local | Tue, 29 Nov 2016 10:11:13 UTC |
-| 583d54426f086f6462f94110 | succeeded (1s elapsed) | register-lb  | core.local | Tue, 29 Nov 2016 10:11:14 UTC |
-+--------------------------+------------------------+--------------+------------+-------------------------------+
-vagrant@st2-node:~$ 
-```
+![ワークフローの実行結果](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/execute_workflow1.png)
 
 　４つのアクション (`create-vm`, `provision-vm`, `register-dns`, `register-lb`) が実行され、それぞれ正常終了したことが確認できます。  
 　ここでアクション `register-lb` で実行するコマンド `/usr/local/bin/register-lb` が異常終了するよう、以下の修正を行います。  
@@ -152,30 +131,7 @@ vagrant@st2-node:~$
 
 　そして、先程と同様にワークフロー `default.setup_vm` を実行してください。  
 
-```
-vagrant@st2-node:~$ st2 run default.setup_vm name=hoge ipaddr=192.168.1.10 domain=st2.dmm.local
-....
-id: 583d564f6f086f6556b966b4
-action.ref: default.setup_vm
-parameters: 
-  domain: st2.dmm.local
-  ipaddr: 192.168.1.10
-  name: hoge
-status: succeeded
-start_timestamp: 2016-11-29T10:19:59.932935Z
-end_timestamp: 2016-11-29T10:20:07.087992Z
-+--------------------------+------------------------+----------------+------------+-------------------------------+
-| id                       | status                 | task           | action     | start_timestamp               |
-+--------------------------+------------------------+----------------+------------+-------------------------------+
-| 583d56506f086f645fd428d0 | succeeded (0s elapsed) | create-vm      | core.local | Tue, 29 Nov 2016 10:20:00 UTC |
-| 583d56516f086f645fd428d2 | succeeded (0s elapsed) | provision-vm   | core.local | Tue, 29 Nov 2016 10:20:01 UTC |
-| 583d56526f086f645fd428d5 | succeeded (0s elapsed) | register-dns   | core.local | Tue, 29 Nov 2016 10:20:02 UTC |
-| 583d56536f086f645fd428d7 | failed (0s elapsed)    | register-lb    | core.local | Tue, 29 Nov 2016 10:20:03 UTC |
-| 583d56546f086f645fd428da | succeeded (1s elapsed) | unregister-dns | core.local | Tue, 29 Nov 2016 10:20:04 UTC |
-| 583d56556f086f645fd428dc | succeeded (1s elapsed) | clear-vm       | core.local | Tue, 29 Nov 2016 10:20:05 UTC |
-+--------------------------+------------------------+----------------+------------+-------------------------------+
-vagrant@st2-node:~$ 
-```
+![ワークフローの実行結果(アクションの一つが異常終了した場合)](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/execute_workflow2.png)
 
 　`register-lb` が失敗した結果、`unregister-dns` と `clear-vm` が実行され、それぞれ正常終了したことが確認できました。
 

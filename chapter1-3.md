@@ -44,26 +44,5 @@ $ vagrant ssh
 $ curl -sSL https://stackstorm.com/packages/install.sh | bash -s -- --user=st2admin --password=password
 ```
 　以下の出力が得られれば、インストールは成功です。  
-```
-███████╗████████╗██████╗      ██████╗ ██╗  ██╗
-██╔════╝╚══██╔══╝╚════██╗    ██╔═══██╗██║ ██╔╝
-███████╗   ██║    █████╔╝    ██║   ██║█████╔╝ 
-╚════██║   ██║   ██╔═══╝     ██║   ██║██╔═██╗ 
-███████║   ██║   ███████╗    ╚██████╔╝██║  ██╗
-╚══════╝   ╚═╝   ╚══════╝     ╚═════╝ ╚═╝  ╚═╝
 
-  st2 is installed and ready to use.
-
-Head to https://YOUR_HOST_IP/ to access the WebUI
-
-Don't forget to dive into our documentation! Here are some resources
-for you:
-
-* Documentation  - https://docs.stackstorm.com
-* Knowledge Base - https://stackstorm.reamaze.com
-
-Thanks for installing StackStorm! Come visit us in our Slack Channel
-and tell us how it's going. We'd love to hear from you!
-http://stackstorm.com/community-signup
-vagrant@vagrant-ubuntu-trusty-64:~$ 
-```
+![StackStorm All-in-One インストール実行結果](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/basic_sc/st2_install_succeed.png)
