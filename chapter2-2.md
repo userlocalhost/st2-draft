@@ -185,7 +185,7 @@ vagrant@st2-secondary:~$ sudo mount /opt/stackstorm/virtualenvs
 ```
 
 ### StackStorm 設定ファイルの修正
-　最後に、これらの設定変更に伴う StackStorm の設定ファイルの修正を行います。プライマリ、セカンダリの両ノードで以下の通り StackStorm の設定ファイル `/etc/st2/st2.conf` を修正します。  
+　最後に、これらの設定変更に伴う StackStorm の設定ファイルの修正を行います。**プライマリ、セカンダリの両ノード**で以下の通り StackStorm の設定ファイル `/etc/st2/st2.conf` を修正します。  
 
 ```diff
 --- etc/st2/st2.conf.orig       2016-12-07 07:31:31.606370802 +0000
@@ -215,6 +215,7 @@ vagrant@st2-secondary:~$ sudo mount /opt/stackstorm/virtualenvs
 $ sudo st2ctl restart
 ```
 
+### 動作確認
 　ここまでの設定で冗長構成な StackStorm 環境を構築することができました。以下のように、一方のノードでインストールした Pack がもう一方のノードにも反映されることが確認できます。  
 
 ```
