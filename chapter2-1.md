@@ -184,42 +184,11 @@ vagrant@st2-node:~/st2-pack-example$ make
 
 　全ての処理が完了したら、以下のコマンドで正常にセンサ、トリガ、アクションが登録されたことを確認してください。  
 
-```sh
-vagrant@st2-node:~/st2-pack-example$ st2 sensor list --pack=mypack
-+------------------------+--------+-----------------------------------------------+---------+
-| ref                    | pack   | description                                   | enabled |
-+------------------------+--------+-----------------------------------------------+---------+
-| mypack.DirectorySensor | mypack | An example sensor to know how to implement it | True    |
-+------------------------+--------+-----------------------------------------------+---------+
-vagrant@st2-node:~/st2-pack-example$ st2 trigger list --pack=mypack
-+---------------------+--------+---------------------------------------------+
-| ref                 | pack   | description                                 |
-+---------------------+--------+---------------------------------------------+
-| mypack.changed_file | mypack | Trigger which indicates a change of trigger |
-+---------------------+--------+---------------------------------------------+
-vagrant@st2-node:~/st2-pack-example$ st2 action list --pack=mypack
-+-----------------------+--------+----------------------------------------+
-| ref                   | pack   | description                            |
-+-----------------------+--------+----------------------------------------+
-| mypack.output_context | mypack | An example action to know how it works |
-+-----------------------+--------+----------------------------------------+
-vagrant@st2-node:~/st2-pack-example$ st2 rule list --pack=mypack
-+--------------------+--------+--------------------------------+---------+
-| ref                | pack   | description                    | enabled |
-+--------------------+--------+--------------------------------+---------+
-| mypack.mypack_test | mypack | A test rule for testing mypack | True    |
-+--------------------+--------+--------------------------------+---------+
-vagrant@st2-node:~/st2-pack-example$ 
-```
+![mypack のセンサ、トリガ、アクション、ルールの登録を確認](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/st2_registration.png)
 
 　また、以下の通りセンサプロセスが正常に動いていることも確認してください。  
 
-```sh
-vagrant@st2-node:~/st2-pack-example$ ps aux | grep DirectorySensor
-st2       7405  2.4  3.5 152892 73544 ?        S    03:57   1:36 /opt/stackstorm/virtualenvs/mypack/bin/python /opt/stackstorm/st2/local/lib/python2.7/site-packages/st2reactor/container/sensor_wrapper.py --pack=mypack --file-path=/opt/stackstorm/packs/mypack/sensors/directory_sensor.py --class-name=DirectorySensor --trigger-type-refs=mypack.changed_file --parent-args=["--config-file", "/etc/st2/st2.conf"] --poll-interval=30
-vagrant   7807  0.0  0.0  10460   932 pts/0    S+   05:02   0:00 grep --color=auto DirectorySensor
-vagrant@st2-node:~/st2-pack-example$ 
-```
+![mypack のセンサプロセスの動作を確認](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/sensor_process.png)
 
 　ここまでで `mypack` を動かす全ての準備が整いましたので、実際にこれらを動かしてみます。以下のように `DirectorySensor` が監視するディレクトリに適当なファイルを作成してください。  
 
@@ -229,12 +198,4 @@ vagrant@st2-node:~$ sudo touch /opt/stackstorm/packs/hoge
 
 　暫くすると `mypack` の設定ファイル `/opt/stackstorm/packs/mypack/config.yaml` の `log` パラメータで指定したパスにトリガから送られた値が出力されます。出力先のファイルパスの確認と併せて、出力結果を確認します。  
 
-```
-vagrant@st2-node:~$ tail -n2 /opt/stackstorm/packs/mypack/config.yaml 
-# This parameter is used by output_context action
-log: /tmp/output
-vagrant@st2-node:~$ cat /tmp/output
-[1480310219.11] (created) /opt/stackstorm/hoge
-[1480310245.29] (created) /opt/stackstorm/packs/mypack/actions/output_context.pyc
-vagrant@st2-node:~$ 
-```
+![アクションの実行結果を確認](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/event_result.png)

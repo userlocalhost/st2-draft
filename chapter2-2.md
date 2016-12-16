@@ -84,11 +84,7 @@ vagrant@st2-node:~$ sudo apt-get install nfs-kernel-server
 
 　StackStorm をオールインワンインストールをした場合、コンテンツディレクトリの所有者（ユーザ・グループ）は root/st2packs に設定されます。マウント先でも同様に扱えるようにするため `anonuid` と `anongid` オプションに、それぞれ root の uid と st2packs の gid を設定します。なお st2packs の gid は以下の方法で確認できます。  
 
-```sh
-vagrant@st2-node:~$ grep 'st2packs' /etc/group
-st2packs:x:999:st2
-vagrant@st2-node:~$ 
-```
+![グループ 'st2packs' の ID を確認](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/check_st2packs_group.png)
 
 　最後に NFS サーバを再起動させれば完了です。  
 
@@ -218,15 +214,7 @@ $ sudo st2ctl restart
 ### 動作確認
 　ここまでの設定で冗長構成な StackStorm 環境を構築することができました。以下のように、一方のノードでインストールした Pack がもう一方のノードにも反映されることが確認できます。  
 
-```
-vagrant@st2-node:~$ st2 pack install github
-```
-
-```
-vagrant@st2-secondary:~$ st2 pack list | grep github
-| github  | st2 content pack containing github integrations | 0.6.0   | StackStorm, Inc. |
-vagrant@st2-secondary:~$
-```
+![プライマリノードで pack をインストール(上段)し、インストールした pack をセカンダリノードで確認(下段)](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/ha_checking_result.png)
 
 　上記のように、セカンダリノードで github pack の情報が得られれば成功です。またセカンダリノードを停止させても、Pack のインストールから、センサのイベント監視、アクションの実行を継続的に行うことができます。  
 　

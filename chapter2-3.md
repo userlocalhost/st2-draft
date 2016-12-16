@@ -75,15 +75,7 @@ $ st2 key set st2-secondary.sensor_partition "mypack.DirectorySensor"
 
 　データストアに設定した内容は、以下のコマンドで確認できます。なお、データストアはどちらも st2-node の MongoDB を参照しているため、どちらのノードで実行しても同じ結果が得られます。  
 
-```
-$ st2 key list
-+--------------------------------+--------------------------------------------------+--------+-----------+--------------+------+------------------+
-| name                           | value                                            | secret | encrypted | scope        | user | expire_timestamp |
-+--------------------------------+--------------------------------------------------+--------+-----------+--------------+------+------------------+
-| st2-secondary.sensor_partition | mypack.DirectorySensor                           | False  | False     | st2kv.system |      |                  |
-| st2-node.sensor_partition      | aws.ServiceNotificationsSensor, aws.AWSSQSSensor | False  | False     | st2kv.system |      |                  |
-+--------------------------------+--------------------------------------------------+--------+-----------+--------------+------+------------------+
-```
+![Partitioning Sensors の設定結果](https://raw.githubusercontent.com/userlocalhost/st2-draft/master/img/advanced_sc/datastore_result.png)
 
 　最後に、両ノードの StackStorm を再起動をさせれば設定は完了です。  
 
